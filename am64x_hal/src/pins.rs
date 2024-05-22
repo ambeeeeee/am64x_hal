@@ -23,6 +23,8 @@
 
 // pin!(PE10, )
 
+use crate::gpio::pins::{PinFunction, PullType};
+
 pub trait PinId {
     #[inline]
     fn as_dyn(&self) -> DynPinId;
@@ -36,3 +38,11 @@ pub struct DynPinId {
 pub enum DynBankId {
     Gpio0,
 }
+
+pub struct Pin<I: PinId, F: PinFunction, P: PullType> {
+    pub id: I,
+    pub function: F,
+    pub pull_type: P,
+}
+
+impl<I: PinId, F: PinFunction, P: PullType> Pin<I, F, P> {}

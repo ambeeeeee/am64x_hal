@@ -2,149 +2,197 @@
 
 pub mod bank;
 mod config;
+pub mod func;
+pub mod pins;
 pub use config::*;
 
-pub struct Gpio<'g, GPIO: GpioCfg, ENABLED, DIRECTION, MODE> {
-    periph: &'g GPIO,
-    _enabled: ENABLED,
-    _direction: DIRECTION,
-    _mode: MODE,
-}
+pub use pins::ValidFunction;
 
-pub struct Disabled;
-pub struct Nop;
-
-/// Creates a new [Gpio].
-///
-/// Example:
-///
-/// ```no_run
-/// use jh71xx_hal::{gpio, pac};
-///
-/// let dp = pac::Peripherals::take().unwrap();
-/// let gpio0 = gpio::get_gpio(dp.sys_pinctrl.padcfg().gpio0());
-/// ```
-pub fn get_gpio<GPIO: GpioCfg>(periph: &GPIO) -> Gpio<GPIO, Disabled, Nop, Nop> {
-    Gpio {
-        periph,
-        _enabled: Disabled,
-        _direction: Nop,
-        _mode: Nop,
-    }
-}
-
-use crate::pins::*;
-
-macro_rules! pin_ids {
-    ($bank:ident: $($id:expr;$name:ident),*) => {
-        pin_ids!($bank as $bank: $($id;$name),*);
-    };
-    ($bank:ident as $prefix:ident: $($id:tt),*) => {
-        pin_ids!($bank as $prefix: $($id;$id),*);
-    };
-    ($bank:ident as $prefix:ident: $($id:expr;$name:tt),*) => {
+macro_rules! gpio {
+    ( $bank:ident:$prefix:ident, [ $(($id:expr, $pull_type:ident, $func:ident)),* ] ) => {
         paste::paste!{
-            $(
-                #[doc = "Type level variant for the pin `" $name "` in bank `" $prefix "`."]
-                pub struct [<$prefix $name>] (pub(crate) ());
-                // impl crate::typelevel::Sealed for [<$prefix $name>] {}
-                impl PinId for [<$prefix $name>] {
-                    #[inline]
-                    fn as_dyn(&self) -> DynPinId {
-                        DynPinId {
-                            bank: DynBankId::$bank,
-                            num: $id
-                        }
-                    }
-                }
-                // impl pin_sealed::TypeLevelPinId for [<$prefix $name>] {
-                //     type Bank = [<Bank $bank>];
+            #[doc = "Pin bank " [<$bank>] ]
+            pub mod [<$bank:snake>] {
+                // use $crate::pac::{[<IO_ $bank:upper>],[<PADS_ $bank:upper>]};
+                // use crate::sio::[<SioGpio $bank>];
+                // use super::{Pin, pin, pull, func};
+                // $(pub use super::pin::[<$bank:lower>]::[<$prefix $id>];)*
 
-                //     const ID: DynPinId = DynPinId {
-                //         bank: DynBankId::$bank,
-                //         num: $id
-                //     };
+                // $(
+                //     impl super::DefaultTypeState for [<$prefix $id>] {
+                //         type Function = super::[<Function $func>];
+                //         type PullType = super::[<Pull $pull_type>];
+                //     }
+                //  )*
+                gpio!(struct: $bank $prefix $([<$prefix $id>], $id, $func, $pull_type),*);
 
-                //     fn new() -> Self {
-                //         Self(())
+                // impl Pins {
+                //     /// Take ownership of the PAC peripherals and SIO slice and split it into discrete [`Pin`]s
+                //     ///
+                //     /// This clears the input-enable flag for all Bank0 pads.
+                //     pub fn new(io : [<IO_ $bank:upper>], pads: [<PADS_ $bank:upper>], sio: [<SioGpio $bank>], reset : &mut $crate::pac::RESETS) -> Self {
+                //         // use $crate::resets::SubsystemReset;
+                //         // pads.reset_bring_down(reset);
+                //         // io.reset_bring_down(reset);
+
+                //         // {
+                //         //     use $crate::gpio::pin::DynBankId;
+                //         //     // SAFETY: this function owns the whole bank that will be affected.
+                //         //     let sio = unsafe { &*$crate::pac::SIO::PTR };
+                //         //     if DynBankId::$bank == DynBankId::Bank0 {
+                //         //         sio.gpio_oe().reset();
+                //         //         sio.gpio_out().reset();
+                //         //     } else {
+                //         //         sio.gpio_hi_oe().reset();
+                //         //         sio.gpio_hi_out().reset();
+                //         //     }
+                //         // }
+
+                //         // io.reset_bring_up(reset);
+                //         // pads.reset_bring_up(reset);
+                //         // reset_ie!($bank, pads);
+                //         gpio!(members: io, pads, sio, $(([<$prefix $id>], $func, $pull_type)),+)
                 //     }
                 // }
-            )*
+            }
+        }
+    };
+    (struct: $bank:ident $prefix:ident $($PXi:ident, $id:expr, $func:ident, $pull_type:ident),*) => {
+        use crate::pins::Pin;
+        paste::paste!{
+                /// Collection of all the individual [`Pin`]s
+                pub struct Pins {
+                    // _io: [<IO_ $bank:upper>],
+                    // _pads: [<PADS_ $bank:upper>],
+                    // _sio: [<SioGpio $bank>],
+                    $(
+                        #[doc = "Pin " [<$PXi>] ]
+                        pub [<$PXi:snake>]: Pin<crate::gpio::pins::[<$bank:lower>]::[<$prefix $id>] , crate::gpio::pins::[<Function $func>], crate::gpio::pins::[<Pull $pull_type>]>,
+                     )*
+                }
+        }
+    };
+    (members: $io:ident, $pads:ident, $sio:ident, $(($PXi:ident, $func:ident, $pull_type:ident)),+) => {
+        paste::paste!{
+            Self {
+                _io: $io,
+                _pads: $pads,
+                _sio: $sio,
+                $(
+                    [<$PXi:snake>]: Pin {
+                        id: [<$PXi>] (()),
+                        function: func::[<Function $func>] (()),
+                        pull_type: pull::[<Pull $pull_type>] (())
+                    },
+                )+
+            }
         }
     };
 }
 
-macro_rules! pin_valid_func {
-    ($bank:ident as $prefix:ident, [$head:ident $(, $func:ident)*], [$($name:tt),+]) => {
-        pin_valid_func!($bank as $prefix, [$($func),*], [$($name),+]);
-        paste::paste!{$(
-            impl ValidFunction<[<Function $head>]> for crate::gpio::[<$prefix $name>] {}
-        )+}
-    };
-    ($bank:ident as $prefix:ident, [], [$($name:tt),+]) => {};
-}
-
-pin_ids!(Gpio0 as Gpio: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-pin_ids!(Gpio0 as Gpio: 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31);
-pin_ids!(Gpio0 as Gpio: 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47);
-pin_ids!(Gpio0 as Gpio: 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63);
-pin_ids!(Gpio0 as Gpio: 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79);
-pin_ids!(Gpio0 as Gpio: 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95);
-pin_ids!(Gpio0 as Gpio: 96, 97, 98, 99, 100);
-pin_valid_func!(
-    Gpio0 as Gpio,
-    [Ospi0, Null],
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-);
-
-pin_valid_func!(Gpio0 as Gpio, [Uart2, Null], [15, 16, 17, 23]);
-
-pin_valid_func!(Gpio0 as Gpio, [Uart3, Null], [18, 19, 20, 24]);
-
-pin_valid_func!(Gpio0 as Gpio, [Uart4, Null], [21, 22, 25]);
-
-pin_valid_func!(Gpio0 as Gpio, [Uart5, Null], [26]);
-
-pin_valid_func!(Gpio0 as Gpio, [Uart6, Null], [27, 29, 30, 36]);
-
-pin_valid_func!(
-    Gpio0 as Gpio,
-    [Null],
+gpio!(
+    Gpio0: Gpio,
     [
-        37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82,
-        83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100
+        (0, Down, Null),
+        (1, Down, Null),
+        (2, Down, Null),
+        (3, Down, Null),
+        (4, Down, Null),
+        (5, Down, Null),
+        (6, Down, Null),
+        (7, Down, Null),
+        (8, Down, Null),
+        (9, Down, Null),
+        (10, Down, Null),
+        (11, Down, Null),
+        (12, Down, Null),
+        (13, Down, Null),
+        (14, Down, Null),
+        (15, Down, Null),
+        (16, Down, Null),
+        (17, Down, Null),
+        (18, Down, Null),
+        (19, Down, Null),
+        (20, Down, Null),
+        (21, Down, Null),
+        (22, Down, Null),
+        (23, Down, Null),
+        (24, Down, Null),
+        (25, Down, Null),
+        (26, Down, Null),
+        (27, Down, Null),
+        (28, Down, Null),
+        (29, Down, Null),
+        (30, Down, Null),
+        (31, Down, Null),
+        (32, Down, Null),
+        (33, Down, Null),
+        (34, Down, Null),
+        (35, Down, Null),
+        (36, Down, Null),
+        (37, Down, Null),
+        (38, Down, Null),
+        (39, Down, Null),
+        (40, Down, Null),
+        (41, Down, Null),
+        (42, Down, Null),
+        (43, Down, Null),
+        (44, Down, Null),
+        (45, Down, Null),
+        (46, Down, Null),
+        (47, Down, Null),
+        (48, Down, Null),
+        (49, Down, Null),
+        (50, Down, Null),
+        (51, Down, Null),
+        (52, Down, Null),
+        (53, Down, Null),
+        (54, Down, Null),
+        (55, Down, Null),
+        (56, Down, Null),
+        (57, Down, Null),
+        (58, Down, Null),
+        (59, Down, Null),
+        (60, Down, Null),
+        (61, Down, Null),
+        (62, Down, Null),
+        (63, Down, Null),
+        (64, Down, Null),
+        (65, Down, Null),
+        (66, Down, Null),
+        (67, Down, Null),
+        (68, Down, Null),
+        (69, Down, Null),
+        (70, Down, Null),
+        (71, Down, Null),
+        (72, Down, Null),
+        (73, Down, Null),
+        (74, Down, Null),
+        (75, Down, Null),
+        (76, Down, Null),
+        (77, Down, Null),
+        (78, Down, Null),
+        (79, Down, Null),
+        (80, Down, Null),
+        (81, Down, Null),
+        (82, Down, Null),
+        (83, Down, Null),
+        (84, Down, Null),
+        (85, Down, Null),
+        (86, Down, Null),
+        (87, Down, Null),
+        (88, Down, Null),
+        (89, Down, Null),
+        (90, Down, Null),
+        (91, Down, Null),
+        (92, Down, Null),
+        (93, Down, Null),
+        (94, Down, Null),
+        (95, Down, Null),
+        (96, Down, Null),
+        (97, Down, Null),
+        (98, Down, Null),
+        (99, Down, Null),
+        (100, Down, Null)
     ]
 );
-
-pub trait ValidFunction<F: PinFunction>: PinId {}
-
-pub trait PinFunction {}
-
-pub struct FunctionOspi0;
-
-impl PinFunction for FunctionOspi0 {}
-
-pub struct FunctionNull;
-
-impl PinFunction for FunctionNull {}
-
-pub struct FunctionUart2;
-
-impl PinFunction for FunctionUart2 {}
-
-pub struct FunctionUart3;
-
-impl PinFunction for FunctionUart3 {}
-
-pub struct FunctionUart4;
-
-impl PinFunction for FunctionUart4 {}
-
-pub struct FunctionUart5;
-
-impl PinFunction for FunctionUart5 {}
-
-pub struct FunctionUart6;
-
-impl PinFunction for FunctionUart6 {}
