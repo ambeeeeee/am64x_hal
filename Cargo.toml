@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "am64x_hal",
+    "am64x_pac"
+]

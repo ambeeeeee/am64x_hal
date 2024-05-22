@@ -1,0 +1,111 @@
+#[doc = "Register `CTLPHY_WRAP__CTL_CFG__CTLCFG_DENALI_PI_188` reader"]
+pub type R = crate::R<CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec>;
+#[doc = "Register `CTLPHY_WRAP__CTL_CFG__CTLCFG_DENALI_PI_188` writer"]
+pub type W = crate::W<CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec>;
+#[doc = "Field `PI_RD_TO_ODTH_F1` reader - 5:0\\]
+Defines the delay from a read command to ODT assertion for frequency set 1."]
+pub type PiRdToOdthF1R = crate::FieldReader;
+#[doc = "Field `PI_RD_TO_ODTH_F1` writer - 5:0\\]
+Defines the delay from a read command to ODT assertion for frequency set 1."]
+pub type PiRdToOdthF1W<'a, REG> = crate::FieldWriter<'a, REG, 6>;
+#[doc = "Field `PI_RD_TO_ODTH_F2` reader - 13:8\\]
+Defines the delay from a read command to ODT assertion for frequency set 2."]
+pub type PiRdToOdthF2R = crate::FieldReader;
+#[doc = "Field `PI_RD_TO_ODTH_F2` writer - 13:8\\]
+Defines the delay from a read command to ODT assertion for frequency set 2."]
+pub type PiRdToOdthF2W<'a, REG> = crate::FieldWriter<'a, REG, 6>;
+#[doc = "Field `PI_RDLVL_EN_F0` reader - 17:16\\]
+Enable the PI data eye training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+pub type PiRdlvlEnF0R = crate::FieldReader;
+#[doc = "Field `PI_RDLVL_EN_F0` writer - 17:16\\]
+Enable the PI data eye training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+pub type PiRdlvlEnF0W<'a, REG> = crate::FieldWriter<'a, REG, 2>;
+#[doc = "Field `PI_RDLVL_GATE_EN_F0` reader - 25:24\\]
+Enable the PI gate training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+pub type PiRdlvlGateEnF0R = crate::FieldReader;
+#[doc = "Field `PI_RDLVL_GATE_EN_F0` writer - 25:24\\]
+Enable the PI gate training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+pub type PiRdlvlGateEnF0W<'a, REG> = crate::FieldWriter<'a, REG, 2>;
+impl R {
+    #[doc = "Bits 0:5 - 5:0\\]
+Defines the delay from a read command to ODT assertion for frequency set 1."]
+    #[inline(always)]
+    pub fn pi_rd_to_odth_f1(&self) -> PiRdToOdthF1R {
+        PiRdToOdthF1R::new((self.bits & 0x3f) as u8)
+    }
+    #[doc = "Bits 8:13 - 13:8\\]
+Defines the delay from a read command to ODT assertion for frequency set 2."]
+    #[inline(always)]
+    pub fn pi_rd_to_odth_f2(&self) -> PiRdToOdthF2R {
+        PiRdToOdthF2R::new(((self.bits >> 8) & 0x3f) as u8)
+    }
+    #[doc = "Bits 16:17 - 17:16\\]
+Enable the PI data eye training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+    #[inline(always)]
+    pub fn pi_rdlvl_en_f0(&self) -> PiRdlvlEnF0R {
+        PiRdlvlEnF0R::new(((self.bits >> 16) & 3) as u8)
+    }
+    #[doc = "Bits 24:25 - 25:24\\]
+Enable the PI gate training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+    #[inline(always)]
+    pub fn pi_rdlvl_gate_en_f0(&self) -> PiRdlvlGateEnF0R {
+        PiRdlvlGateEnF0R::new(((self.bits >> 24) & 3) as u8)
+    }
+}
+impl W {
+    #[doc = "Bits 0:5 - 5:0\\]
+Defines the delay from a read command to ODT assertion for frequency set 1."]
+    #[inline(always)]
+    #[must_use]
+    pub fn pi_rd_to_odth_f1(&mut self) -> PiRdToOdthF1W<CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec> {
+        PiRdToOdthF1W::new(self, 0)
+    }
+    #[doc = "Bits 8:13 - 13:8\\]
+Defines the delay from a read command to ODT assertion for frequency set 2."]
+    #[inline(always)]
+    #[must_use]
+    pub fn pi_rd_to_odth_f2(&mut self) -> PiRdToOdthF2W<CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec> {
+        PiRdToOdthF2W::new(self, 8)
+    }
+    #[doc = "Bits 16:17 - 17:16\\]
+Enable the PI data eye training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+    #[inline(always)]
+    #[must_use]
+    pub fn pi_rdlvl_en_f0(&mut self) -> PiRdlvlEnF0W<CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec> {
+        PiRdlvlEnF0W::new(self, 16)
+    }
+    #[doc = "Bits 24:25 - 25:24\\]
+Enable the PI gate training module for frequency set 0. Bit\\[1\\]
+represents the support when non-initialization. Bit\\[0\\]represents the support when initialization. Set to 1 to enable."]
+    #[inline(always)]
+    #[must_use]
+    pub fn pi_rdlvl_gate_en_f0(
+        &mut self,
+    ) -> PiRdlvlGateEnF0W<CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec> {
+        PiRdlvlGateEnF0W::new(self, 24)
+    }
+}
+#[doc = "CTLPHY_WRAP__CTL_CFG__CTLCFG_DENALI_PI_188\n\nYou can [`read`](crate::generic::Reg::read) this register and get [`ctlphy_wrap__ctl_cfg__ctlcfg_denali_pi_188::R`](R).  You can [`reset`](crate::generic::Reg::reset), [`write`](crate::generic::Reg::write), [`write_with_zero`](crate::generic::Reg::write_with_zero) this register using [`ctlphy_wrap__ctl_cfg__ctlcfg_denali_pi_188::W`](W). You can also [`modify`](crate::generic::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."]
+pub struct CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec;
+impl crate::RegisterSpec for CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec {
+    type Ux = u32;
+}
+#[doc = "`read()` method returns [`ctlphy_wrap__ctl_cfg__ctlcfg_denali_pi_188::R`](R) reader structure"]
+impl crate::Readable for CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec {}
+#[doc = "`write(|w| ..)` method takes [`ctlphy_wrap__ctl_cfg__ctlcfg_denali_pi_188::W`](W) writer structure"]
+impl crate::Writable for CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec {
+    type Safety = crate::Unsafe;
+    const ZERO_TO_MODIFY_FIELDS_BITMAP: u32 = 0;
+    const ONE_TO_MODIFY_FIELDS_BITMAP: u32 = 0;
+}
+#[doc = "`reset()` method sets CTLPHY_WRAP__CTL_CFG__CTLCFG_DENALI_PI_188 to value 0"]
+impl crate::Resettable for CtlphyWrap_CtlCfg_CtlcfgDenaliPi188Spec {
+    const RESET_VALUE: u32 = 0;
+}
